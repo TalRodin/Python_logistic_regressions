@@ -43,9 +43,12 @@ def main():
     #printed the the first few rows of the table to see
     print(data_F.head())
     
+    #plotting amount N vs O
+    plot_N_O(data_F)
+    
     #example how logistic regrestic looks like, plotting sigmoid function
     #x values range from -10 to 10
-    z = np.arange(-10, 10, 0.1)
+    z = np.arange(-8, 8, 0.1)
     
     # plug into sigmoid function values x
     phi_z = sigmoid(z)
@@ -98,10 +101,31 @@ def main():
     #created confusion matrix
     conf_mat(X_test_std,lr,y_test)
     
+#function to shuffle the data    
 def shuffle_data(new_data):
     new_data = shuffle(new_data, random_state=0)
     return(new_data)
+
+#plot Diagnosis N vs. O
+def plot_N_O(data_F):
     
+    count_N=0
+    count_O=0
+    for i in data_F['Diagnosis']:
+        if i=='N':
+            count_N+=1
+        
+        else:
+            count_O+=1
+    print('N: ',count_N)
+    print('O: ',count_O)
+
+    #or
+
+    data_F['Diagnosis'].value_counts()
+    sns.countplot(x='Diagnosis', data=data_F, palette="coolwarm")
+    plt.show()
+#function that converts to dummy values    
 def dummy_new_table(X,data_F):
     dummy_Season=pd.get_dummies(data_F['Season'],prefix='Season')
     #print(dummy_Season)
@@ -115,14 +139,14 @@ def dummy_new_table(X,data_F):
     new_data=pd.concat([X, dummy_Season,dummy_Childish_diseases,dummy_Accident_trauma,dummy_Surgical_intervention], axis=1)
     return(new_data)
   
-
+#function for first correlation plot
 def corr_fun(new_data):
     sns.heatmap(new_data.corr())
     corr = new_data.corr()
     return(corr)
 
+#function for getting second correlation matrix
 def new_corr_fun(new_data2):
-    
     new_corr_matrix=new_data2.as_matrix()
     c=np.corrcoef(new_corr_matrix.transpose())
     print(np.shape(c))
@@ -130,25 +154,27 @@ def new_corr_fun(new_data2):
     print(new_corr)
     return(new_corr)
 
+#function that plot new correlation matrix
 def plotly_new_corr(new_corr):
     y = ['Diagnosis_code', 'Age', 'High_fevers', 'Alcohol_consumption','Smoking','Sitting','Season_-0.33','Season_0.33','Season_1.0','Childish_diseases_1','Accident_trauma_1','Surgical_intervention_1' ]
     x = ['Diagnosis_code', 'Age', 'High_fevers', 'Alcohol_consumption','Smoking','Sitting','Season_-0.33','Season_0.33','Season_1.0','Childish_diseases_1','Accident_trauma_1','Surgical_intervention_1']
     print(new_corr[0])
-    colorscale = [[0, '#C6E2FF'], [1, '#27408B']]
+    colorscale = [[0, '#F5F5F5'], [1, '	#104E8B']]
     font_colors = ['#3c3636', '	#FCFCFC']
     fig = ff.create_annotated_heatmap(new_corr,x=x, y=y, colorscale=colorscale, font_colors=font_colors)
     for i in range(len(fig.layout.annotations)):
-        fig.layout.annotations[i].font.size = 8
+        fig.layout.annotations[i].font.size = 6
     plot(fig, filename='correlation')
     
-    
+#function that represent the data as matrix and devides it on target variable and
+#independent variables
 def matrix_data(new_data2) :   
     data_F_matrix = new_data2.as_matrix()
     data=data_F_matrix[:,1:] 
     target=data_F_matrix[:,0]
     return (data, target)
     
-
+#function of logistic regressions
 def log_reg(data,target,new_data2):  
     X = data
     y = target
@@ -224,11 +250,11 @@ def sigmoid(z):
 
 #function for plotting sigmoid
 def sigm_plot(z,phi_z):
-    plt.plot(z, phi_z,'darkviolet')
-    plt.axvline(0.0, color='k')
+    plt.plot(z, phi_z,'#3A5FCD')
+    plt.axvline(0.0, linewidth=1,color='k')
     plt.axhspan(-0.1, 1.1, facecolor='1.0', alpha=1.0, ls='dotted')
     plt.axhline(y=0.5, ls='dotted', color='k')
-    plt.axhline(y=0.0, ls='dotted', color='k')
+    plt.axhline(y=0.0, ls='dotted',color='k')
     plt.axhline(y=1.0, ls='dotted', color='k')
     plt.yticks([0.0, 0.5, 1.0])
     plt.ylim(-0.1, 1.1)
