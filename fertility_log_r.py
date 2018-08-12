@@ -1,23 +1,29 @@
-import matplotlib.pyplot as plt
-import numpy as np
-from sklearn import datasets
-from sklearn.preprocessing import LabelEncoder
+from plotly.offline import  plot
+import plotly.graph_objs as go
+from nltk.corpus import stopwords
 import pandas as pd
-from sklearn.cross_validation import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from matplotlib.colors import ListedColormap
-from sklearn.preprocessing import OneHotEncoder
-import seaborn as sns
-from sklearn import metrics
-from sklearn.metrics import confusion_matrix
-from sklearn.utils import shuffle
+import numpy as np
 import plotly.plotly as py
-import plotly.figure_factory as ff
-from plotly import __version__
-from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+from plotly.figure_factory import create_table
 from plotly.graph_objs import Scatter, Figure, Layout
-
+import scipy
+import time
+from plotly.grid_objs import Grid, Column
+import plotly
+import json
+import csv
+from nltk.tokenize import word_tokenize
+import nltk
+import matplotlib.pyplot as plt
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+import pandas_datareader.data as web
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from datetime import datetime
+from sklearn.cross_validation import train_test_split
+from sklearn.linear_model import LogisticRegression
 #Input variables
 #Season in which the analysis was performed. 1) winter, 2) spring, 3) Summer, 4) fall. (-1, -0.33, 0.33, 1) nominal categorical data
 #Age at the time of analysis. 18-36 (0, 1) 
@@ -203,6 +209,7 @@ def log_reg(data,target,new_data2):
     weights, params = [], []
     for c in np.arange(-5, 6,  dtype=float):
         lr=LogisticRegression(penalty='l1', C=10**c, random_state=0)
+      
         lr.fit(X_train_std,y_train)
         weights.append(lr.coef_[0])
         params.append(10**c)
