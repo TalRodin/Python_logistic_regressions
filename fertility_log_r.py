@@ -175,6 +175,7 @@ def plotly_new_corr(new_corr):
 #function that represent the data as matrix and devides it on target variable and
 #independent variables
 def matrix_data(new_data2) :   
+    
     data_F_matrix = new_data2.as_matrix()
     data=data_F_matrix[:,1:] 
     target=data_F_matrix[:,0]
