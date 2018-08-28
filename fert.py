@@ -1,30 +1,14 @@
-from plotly.offline import  plot
-import plotly.graph_objs as go
-from nltk.corpus import stopwords
 import pandas as pd
 import numpy as np
 from sklearn.utils import shuffle
-import plotly.plotly as py
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
-from plotly.figure_factory import create_table
-from plotly.graph_objs import Scatter, Figure, Layout
-import scipy
-import time
-from plotly.grid_objs import Grid, Column
-import plotly
-import json
-import csv
-from nltk.tokenize import word_tokenize
-import nltk
 import matplotlib.pyplot as plt
-from nltk.sentiment.vader  import SentimentIntensityAnalyzer
-import pandas_datareader.data as web
 import seaborn as sns
 from sklearn.preprocessing import StandardScaler
-from datetime import datetime
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import confusion_matrix
 #Input variables
 #Season in which the analysis was performed. 1) winter, 2) spring, 3) Summer, 4) fall. (-1, -0.33, 0.33, 1) nominal categorical data
 #Age at the time of analysis. 18-36 (0, 1) 
@@ -47,18 +31,19 @@ def main():
     #print(data_F.isnull().sum())
     #data_F=data_F.dropna()
     
-    #printed the the first few rows of the table to see
-    #print(data_F.head())
-    
-    #save table for Tableau
+    #save table for Tableau in the json format
     table_fert=data_F.to_json(orient='table')
     outfile = open("/Users/alyonarodin/Desktop/Python_log_project/table_fert.json", "w")
     outfile.write(table_fert)
     outfile.close()
     
-    #plotting amount N vs O
+    #funtion of plotting amount N vs O (binary outcome)
     count_N,count_O=plot_N_O(data_F)
     
+    #function that adds data based on the results of previous function plot_N_O().
+    #if count_N > count_O then the N value (one of the vinary outcome we try to predict based on the 
+    # variables we have) will be added otherwise O value. Added into seperate list each column.
+    #Separated N value from O value.
     Season=add_data(data_F['Season'],count_N,count_O,data_F)
     Age=add_data(data_F['Age'],count_N,count_O,data_F)
     Childish_diseases=add_data(data_F['Childish diseases'],count_N,count_O,data_F)
@@ -70,23 +55,32 @@ def main():
     sitting=add_data(data_F['sitting'],count_N,count_O,data_F)
     Diagnosis=add_data(data_F['Diagnosis'],count_N,count_O,data_F) 
     
+    #combines the lists we created 
     df_O_data=pd.DataFrame(list(zip(Season,Age,Childish_diseases,Accident,Surgical_intervention,High_fevers,Frequency,Smoking,sitting,Diagnosis)),columns=['Season','Age','Childish diseases','Accident','Surgical intervention','High fevers','Frequency','Smoking','sitting','Diagnosis'])
    
     #checking if we have NA values
     #print(df_O_data.isnull().sum())
     
+    #concated into one table the initial table with additional values we created based on what value is greater
+    # N or O
     n_data=pd.concat([data_F, df_O_data,df_O_data,df_O_data,df_O_data,df_O_data,df_O_data])
     #print(n_data.isnull().sum())
     
+    #shuffled data
     new_data=shuffle_data(n_data)
     #print(new_data.isnull().sum())
     
+    #we used again the function plot_N_O to see if it looks better and the outcome approximately the 
+    #same, otherwise the results will be leaning towards the the value that has the greater number
     count_N,count_O=plot_N_O(new_data)
     
+    #Converted diagnoses into values 1 and 0
     data_F=prep_data(new_data)
     #print(data_F.isnull().sum())    
     
+    #preparing dummy values
     X = data_F[['Diagnosis_code','Age','High fevers','Frequency','Smoking','sitting' ]]
+    
     #prepared dummy and new dataset
     #print(X.dtypes)
     new_data=dummy_new_table(X,data_F)
@@ -94,32 +88,40 @@ def main():
     
     #checked for correlation
     corr=corr_fun(new_data)
-    #print(corr)
-
+    print(corr)
+    
+    #dropped few columns to eliminate the multicolinearity due to dummy variabels
     new_data2=new_data.drop(['Accident_trauma_0'],axis=1)
     new_data2=new_data2.drop(['Childish_diseases_0'], axis=1)
     new_data2=new_data2.drop(['Surgical_intervention_0'], axis=1)
     new_data2=new_data2.drop(['Season_-1.0'], axis=1)
+    
+    #seperated data into X (all rows and columns from 2 and furhter)
+    #y dataset contains the diagnoses values only
     X, y=new_data2.iloc[:,1:].values, new_data2.iloc[:,0].values
     
-    #one more time to check correlation to make sure everything is fine
+    #one more time to check correlation to make sure there is no multicollinearity
     new_corr=corr_fun(new_data2)
     print(new_corr)
     
-    
+    #splitted dataset into test and train as 0.7/0.3
     X_train, X_test, y_train, y_test=train_test_split(X,y, test_size=0.3, random_state=0)
     
+    #transfered values into standard scaler 
     stdsc=StandardScaler()
     X_train_std=stdsc.fit_transform(X_train)
     X_test_std=stdsc.transform(X_test)
     
     
     
-    
-    lr=LogisticRegression(penalty='l1', C=0.8)
+    #runned logistic regressions on training data
+    #penalty --> l1 regularization
+    # c=0.2 regularization parameter 
+    lr=LogisticRegression(penalty='l1', C=0.2)
     lr.fit(X_train_std, y_train)
     print('Training accuracy:', lr.score(X_train_std, y_train))
     print('Test accuracy:', lr.score(X_test_std, y_test))
+    #shows intercepts and coefficients
     print(lr.intercept_)
     print(lr.coef_)
     
@@ -163,7 +165,28 @@ def main():
     plt.tight_layout()   
     plt.show()
     
+    #confusion matrix
+    lr_pred_prob=lr.predict_proba(X_test_std)
     
+    print(np.around(lr_pred_prob, decimals=3))
+    
+    y_pred = lr.predict(X_test_std)
+    
+    print(y_pred)
+    
+    print(y_test)
+    
+    confmat = confusion_matrix(y_true=y_test, y_pred=y_pred)
+    print(confmat)
+
+    fig, ax = plt.subplots(figsize=(2.5, 2.5))
+    ax.matshow(confmat, cmap=plt.cm.Greens, alpha=0.5)
+    for i in range(confmat.shape[0]):
+        for j in range(confmat.shape[1]):
+            ax.text(x=j, y=i,s=confmat[i, j], va='center', ha='center')
+    plt.xlabel('predicted label')
+    plt.ylabel('true label')
+    plt.show()
     
     
 def plot_N_O(data_F):
@@ -192,7 +215,11 @@ def add_data(x,count_N,count_O,data_F):
     if count_N > count_O:
         for i in range(len(data_F['Diagnosis'])):
             if data_F['Diagnosis'][i]=='O':
-                list_.append(x[i])        
+                list_.append(x[i])
+    if count_O>count_N:
+        for i in range(len(data_F['Diagnosis'])):
+            if data_F['Diagnosis'][i]=='N':
+                list_.append(x[i])
     return(list_)
 
 def shuffle_data(new_data):
