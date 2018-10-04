@@ -15,3 +15,7 @@ Frequency of alcohol consumption. 1) several times a day, 2) every day, 3) sever
 Smoking habit. 1) never, 2) occasional 3) daily. (-1, 0, 1) — ordinal categorical data
 A Number of hours spent sitting per day 1–16 (0, 1) — ordinal categorical data
 
+![image](https://user-images.githubusercontent.com/32145723/46493969-b0a46b80-c7df-11e8-8872-ef488c73d802.png)
+Ordinal categorical data — data that contains clear order, for example, temperature low, medium, high.
+Nominal categorical data — data that contains categories but no clear order, for example, male or female.
+For our convenience we will use Rodeo — a data science IDE for Python
